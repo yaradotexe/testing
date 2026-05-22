@@ -1,4 +1,6 @@
 #!/bin/bash
+set -ouex pipefail
+
 echo "Cleaning up Bazzite default packages..."
 
 REMOVE_PKGS=(
