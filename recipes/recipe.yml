@@ -4,7 +4,7 @@
 name: project-icarus
 description: Optimized Fedora-based gaming and workstation image
 base-image: ghcr.io/ublue-os/bazzite-kde
-image-version: 41
+image-version: stable
 
 modules:
   - type: rpm-ostree
