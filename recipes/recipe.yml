@@ -14,8 +14,8 @@ modules:
       - zenity
       - retroarch
       - plymouth-theme-spinner
-
-- type: files
+  
+  - type: files
     files:
       - source: system/usr
         destination: /usr
