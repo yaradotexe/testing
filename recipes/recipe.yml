@@ -33,5 +33,4 @@ modules:
       - setup-plymouth.sh
       - setup-ui-theme.sh
       - finalize-system.sh
-    pre-script: |
-      chmod +x scripts/*.sh
+
