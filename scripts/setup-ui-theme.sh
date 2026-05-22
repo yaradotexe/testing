@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ouex pipefail
 
 echo "Configuring KDE Plasma defaults (Reactionary 98)..."
 
