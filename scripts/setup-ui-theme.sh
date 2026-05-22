@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ouex pipefail
+chmod +x /tmp/scripts/*.sh || true
 
 echo "Configuring KDE Plasma defaults (Reactionary 98)..."
 
