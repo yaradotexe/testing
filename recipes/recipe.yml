@@ -1,10 +1,10 @@
 # Project Icarus - Main Image Recipe
-# Based on Bazzite KDE (Fedora 41)
+# Based on Bazzite KDE 
 
 name: project-icarus
 description: Optimized Fedora-based gaming and workstation image
-base-image: ghcr.io/ublue-os/bazzite-kde
-image-version: stable
+base-image: ghcr.io/ublue-os/bazzite
+image-version: latest
 
 modules:
   - type: rpm-ostree
