@@ -14,9 +14,7 @@ modules:
       - zenity
       - distrobox
       - gamescope
-      - es-de
       - retroarch
-      - pegasus-frontend
       - plymouth-theme-spinner
 
   - type: files
