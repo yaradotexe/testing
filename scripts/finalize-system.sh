@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ouex pipefail
+chmod +x /tmp/scripts/*.sh || true
 
 echo "Cleaning up Bazzite default packages..."
 
