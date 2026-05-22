@@ -13,7 +13,6 @@ modules:
       - yad
       - zenity
       - retroarch
-      - plymouth-theme-spinner
   
   - type: files
     files:
@@ -21,8 +20,6 @@ modules:
         destination: /usr
       - source: systemd/icarus-user-rename.service
         destination: /etc/systemd/system/icarus-user-rename.service
-      - source: modules/plymouth/win98
-        destination: /usr/share/icarus/plymouth
       - source: ascii.txt
         destination: /usr/share/icarus/ascii.txt
       - source: modules/reactionary
