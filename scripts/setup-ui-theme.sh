@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 echo "Configuring KDE Plasma defaults (Reactionary 98)..."
 
