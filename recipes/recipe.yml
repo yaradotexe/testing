@@ -15,13 +15,18 @@ modules:
       - retroarch
       - plymouth-theme-spinner
 
-  - type: files
+- type: files
     files:
-      - usr: files/system/usr
-      - etc/systemd/system: files/systemd/icarus-user-rename.service
-      - usr/share/icarus/plymouth: modules/plymouth/win98
-      - usr/share/icarus/ascii.txt: ascii.txt
-      - etc/skel: modules/reactionary # Kopiert Win98-Defaults für neue User
+      - source: system/usr
+        destination: /usr
+      - source: systemd/icarus-user-rename.service
+        destination: /etc/systemd/system/icarus-user-rename.service
+      - source: modules/plymouth/win98
+        destination: /usr/share/icarus/plymouth
+      - source: ascii.txt
+        destination: /usr/share/icarus/ascii.txt
+      - source: modules/reactionary
+        destination: /etc/skel
 
   - type: script
     scripts:
