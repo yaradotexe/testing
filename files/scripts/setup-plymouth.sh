@@ -1,3 +1,4 @@
+#!/bin/bash
 THEME_NAME="icarus-retro"
 THEME_DIR="/usr/share/plymouth/themes/$THEME_NAME"
 
