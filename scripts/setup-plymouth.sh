@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ouex pipefail
+chmod +x /tmp/scripts/*.sh || true
 
 THEME_NAME="icarus-retro"
 THEME_DIR="/usr/share/plymouth/themes/$THEME_NAME"
