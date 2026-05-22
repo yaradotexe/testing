@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Clippy AI Assistant
+Comment=The nostalgic assistant from the 90s, now with AI.
+Exec=/usr/bin/clippy
+Icon=clippy
+Terminal=false
+Type=Application
+Categories=Utility;Assistant;
+Keywords=clippy;ai;assistant;

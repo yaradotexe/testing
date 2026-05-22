@@ -1,0 +1,26 @@
+
+
+THEME_DIR="$HOME/.var/app/org.pegasus_frontend.Pegasus/data/pegasus-frontend/themes"
+[ ! -d "$THEME_DIR" ] && THEME_DIR="$HOME/.config/pegasus-frontend/themes"
+
+if [ ! -d "$THEME_DIR" ]; then
+    echo "Pegasus themes directory not found."
+    exit 1
+fi
+
+echo "Scanning Pegasus themes for game preview elements..."
+
+
+find "$THEME_DIR" -name "*.qml" -type f | while read -r qml; do
+    if grep -q "Image {" "$qml"; then
+        echo "Patching $qml..."
+        # Disable smoothing globally
+        sed -i 's/smooth: true/smooth: false/g' "$qml"
+        
+        # Inject smooth: false into Image blocks
+        sed -i '/Image {/a \        smooth: false' "$qml"
+    fi
+done
+
+notify-send "Icarus Pegasus" "Game previews pixelated for retro vibe."
+echo "Done. Restart Pegasus to see changes."

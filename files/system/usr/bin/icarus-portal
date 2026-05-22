@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+# Icarus Assistant (formerly Portal)
+# A comprehensive system management hub inspired by Garuda Assistant
+# Optimized for Win98 Retro Aesthetics
+
+ICON="/usr/share/icons/hicolor/48x48/apps/icarus-logo.png"
+# Win98 Style Icons
+ICON_UPDATE="system-software-update"
+ICON_REPAIR="tools-wizard"
+ICON_CLEAN="edit-clear-all"
+ICON_THEME="preferences-desktop-theme"
+ICON_GAME="input-gaming"
+ICON_INFO="dialog-information"
+ICON_TERMINAL="utilities-terminal"
+
+YAD_OPTS="--center --width=800 --height=600 --window-icon=$ICON --title='Icarus Assistant'"
+
+# Helper for executing and notifying
+run() {
+    notify-send "Icarus Assistant" "Executing: $1"
+    bash -c "$1"
+}
+export -f run
+
+# --- Tab 1: Maintenance (The "Assistant" core) ---
+tab_maintenance() {
+    yad --plug=assistant --tabnum=1 --form --columns=2 \
+        --text="<b>System Maintenance & Repair</b>" \
+        --field="!$ICON_UPDATE!Update System:BTN" "run 'sun --push'" \
+        --field="!$ICON_REPAIR!Oopsie Repair:BTN" "run 'sun --oopsie'" \
+        --field="!$ICON_CLEAN!Clean System:BTN" "run 'sun --clean'" \
+        --field="!$ICON_INFO!View Setup Log:BTN" "run 'yad --text-info --file=$HOME/.config/icarus-setup.log --width=600 --height=400'" \
+        --field="!system-run!Firmware/BIOS:BTN" "run 'sun --uefi'" \
+        --field="!view-refresh!Refresh Mirros:BTN" "run 'sudo rpm-ostree refresh-md'"
+}
+
+# --- Tab 2: Customization (The "Look & Feel") ---
+tab_custom() {
+    yad --plug=assistant --tabnum=2 --form --columns=2 \
+        --text="<b>Win98 Aesthetics & Customization</b>" \
+        --field="!$ICON_THEME!Sync Theme Globally:BTN" "run 'icarus-apply-theme'" \
+        --field="!$ICON_GAME!Pixelate Pegasus:BTN" "run 'icarus-pegasus-pixel'" \
+        --field="!preferences-desktop-wallpaper!Desktop Settings:BTN" "run 'kcmshell6 kcm_wallpaper'" \
+        --field="!preferences-desktop-icons!Icon Settings:BTN" "run 'kcmshell6 kcm_icons'" \
+        --field="!preferences-desktop-screensaver!Screensaver:BTN" "run 'kcmshell6 kcm_screensaver'" \
+        --field="!preferences-desktop-display!Display Resolution:BTN" "run 'kcmshell6 kcm_kscreen'"
+}
+
+# --- Tab 3: Gaming & Apps (The "Wings" Store) ---
+tab_apps() {
+    yad --plug=assistant --tabnum=3 --form --columns=2 \
+        --text="<b>Software & Gaming Stack</b>" \
+        --field="!steam!Steam:BTN" "run 'sun install steam'" \
+        --field="!lutris!Lutris:BTN" "run 'sun install lutris'" \
+        --field="!heroic!Heroic Games:BTN" "run 'sun install heroic'" \
+        --field="!distrobox!Creme-Brulee (DNF):BTN" "run 'sun --melt'" \
+        --field="!org.kde.discover!Discover Store:BTN" "run 'plasma-discover'" \
+        --field="!$ICON_TERMINAL!Konsole:BTN" "run 'konsole'"
+}
+
+# --- Tab 4: System Info & Links ---
+tab_info() {
+    # Get some quick system info
+    local OS_INFO=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2)
+    local KERNEL=$(uname -r)
+    local CPU=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs)
+    
+    yad --plug=assistant --tabnum=4 --form \
+        --text="<b>System Information</b>\nOS: $OS_INFO\nKernel: $KERNEL\nCPU: $CPU\nBoot: Win98 Startup Sound Enabled\nLogin: Reactionary SDDM Theme" \
+        --field="!help-browser!Project Wiki:BTN" "run 'xdg-open https://github.com/yaradotexe/project-icarus'" \
+        --field="!internet-chat!Support (Discord):BTN" "run 'xdg-open https://discord.gg/example'" \
+        --field="!system-search!Report a Bug:BTN" "run 'xdg-open https://github.com/yaradotexe/project-icarus/issues'"
+}
+
+export -f tab_maintenance tab_custom tab_apps tab_info
+
+# Launch tabs in background
+tab_maintenance &
+tab_custom &
+tab_apps &
+tab_info &
+
+# Main Notebook
+yad --notebook --key=assistant \
+    --tab="Assistant" --tab="Customization" --tab="Gaming" --tab="Resources" \
+    --button="Exit:0" $YAD_OPTS

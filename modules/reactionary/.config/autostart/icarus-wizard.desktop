@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Icarus Setup Wizard
+Comment=Initial System Configuration
+Exec=/usr/bin/icarus-wizard
+Terminal=false
+Type=Application
+Icon=icarus-logo
+Categories=System;
+X-KDE-Autostart-after=panel
+OnlyShowIn=KDE;

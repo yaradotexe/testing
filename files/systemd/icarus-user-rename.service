@@ -1,0 +1,13 @@
+[Unit]
+Description=Icarus User Migration Service
+Before=display-manager.service sddm.service
+After=systemd-user-sessions.service
+ConditionPathExists=/var/tmp/icarus-pending-rename
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/icarus-user-rename
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

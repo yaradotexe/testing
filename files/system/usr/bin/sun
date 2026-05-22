@@ -1,0 +1,154 @@
+#!/usr/bin/bash
+# Project Icarus - System Management Utility
+# Central entry point for system updates and container management
+
+set -e
+
+CONTAINER_NAME="creme-brulee"
+RED='#FF0000'
+YELLOW='#FFFF00'
+BLUE='#0000FF'
+GREEN='#00FF00'
+NC='\033[0m'
+
+# Check for TUI helper
+if ! command -v gum &> /dev/null; then USE_GUM=false; else USE_GUM=true; fi
+
+ensure_container() {
+    if ! distrobox list | grep -q "$CONTAINER_NAME"; then
+        echo -e "${BLUE}>>> Initializing $CONTAINER_NAME...${NC}"
+        distrobox create -n "$CONTAINER_NAME" -i fedora:latest --yes
+    fi
+}
+
+run_dnf() {
+    ensure_container
+    distrobox enter "$CONTAINER_NAME" -- sudo dnf "$@"
+}
+
+melt_ice() {
+    ensure_container
+    distrobox enter "$CONTAINER_NAME"
+}
+
+update_system() {
+    echo -e "${BLUE}>>> OS Upgrade...${NC}"
+    rpm-ostree upgrade
+    flatpak update -y
+    if distrobox list | grep -q "$CONTAINER_NAME"; then
+        echo -e "${YELLOW}>>> Container Upgrade...${NC}"
+        distrobox enter "$CONTAINER_NAME" -- sudo dnf update -y
+    fi
+}
+
+run_maintenance() {
+    echo -e "${BLUE}>>> Running System Maintenance...${NC}"
+    echo -e "${YELLOW}Cleaning Flatpak leftovers...${NC}"
+    flatpak uninstall --unused -y
+    echo -e "${YELLOW}Cleaning Journal logs (older than 7 days)...${NC}"
+    sudo journalctl --vacuum-time=7d
+    echo -e "${YELLOW}Trimming SSD...${NC}"
+    sudo fstrim -av
+    echo -e "${GREEN}Maintenance complete.${NC}"
+}
+
+run_oopsie() {
+    echo -e "${RED}>>> ICARUS OOPSIE: Diagnostic & Repair Mode <<<${NC}"
+    
+    # 1. Check Container
+    echo -e "${YELLOW}[1/4] Checking Distrobox Container...${NC}"
+    if ! distrobox list | grep -q "$CONTAINER_NAME"; then
+        echo -e "${RED}Container $CONTAINER_NAME is missing! Re-initializing...${NC}"
+        ensure_container
+    else
+        echo -e "${GREEN}Container OK.${NC}"
+    fi
+
+    # 2. Check Flatpaks
+    echo -e "${YELLOW}[2/4] Checking for broken Flatpaks...${NC}"
+    if flatpak repair --sys; then
+        echo -e "${GREEN}Flatpaks OK.${NC}"
+    else
+        echo -e "${RED}Repaired Flatpak errors.${NC}"
+    fi
+
+    # 3. Check Systemd Units
+    echo -e "${YELLOW}[3/4] Checking for failed services...${NC}"
+    FAILED=$(systemctl --failed --property=Id --plain --no-legend)
+    if [ -n "$FAILED" ]; then
+        echo -e "${RED}Found failed services:${NC}\n$FAILED"
+        for svc in $FAILED; do
+            echo "Restarting $svc..."
+            sudo systemctl restart "$svc"
+        done
+    else
+        echo -e "${GREEN}All services OK.${NC}"
+    fi
+
+    # 4. Check Disk Space
+    echo -e "${YELLOW}[4/4] Checking Disk Space...${NC}"
+    SPACE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+    if [ "$SPACE" -gt 90 ]; then
+        echo -e "${RED}Warning: Disk is ${SPACE}% full!${NC}"
+        run_maintenance
+    else
+        echo -e "${GREEN}Disk Space OK (${SPACE}%).${NC}"
+    fi
+
+    echo -e "${GREEN}>>> Oopsie Repair finished. System should be stable now. <<<${NC}"
+}
+
+wings_menu() {
+    if [ "$USE_GUM" = true ]; then
+        APP=$(gum choose --header "Wings App Management" "Steam" "Lutris" "Heroic" "Distrobox" "Back")
+        case "$APP" in
+            "Steam"*) flatpak install -y flathub com.valvesoftware.Steam ;;
+            "Lutris"*) flatpak install -y flathub net.lutris.Lutris ;;
+            "Heroic"*) flatpak install -y flathub com.heroicgameinterpreter.heroic ;;
+            "Distrobox"*) ensure_container ;;
+            "Back") show_menu ;;
+        esac
+    fi
+}
+
+show_menu() {
+    if [ "$USE_GUM" = true ]; then
+        CHOICE=$(gum choose --header "Icarus Management" \
+            "Push: System Update" \
+            "Oopsie: Repair System" \
+            "Clean: Maintenance" \
+            "Melt: Enter Container" \
+            "DNF: Install Package" \
+            "Wings: App Store" \
+            "UEFI: BIOS Setup" \
+            "Exit")
+
+        case "$CHOICE" in
+            "Push:"*) update_system ;;
+            "Oopsie:"*) run_oopsie ;;
+            "Clean:"*) run_maintenance ;;
+            "Melt:"*) melt_ice ;;
+            "DNF:"*) 
+                PKG=$(gum input --placeholder "Package name")
+                [ -n "$PKG" ] && run_dnf install "$PKG" ;;
+            "Wings:"*) wings_menu ;;
+            "UEFI:"*) systemctl reboot --firmware-setup ;;
+            "Exit") exit 0 ;;
+        esac
+    else
+        echo "Usage: sun [--push|--oopsie|--clean|--melt|dnf|--uefi]"
+    fi
+}
+
+case "$1" in
+    dnf) shift; run_dnf "$@" ;;
+    --push) update_system ;;
+    --oopsie) run_oopsie ;;
+    --clean) run_maintenance ;;
+    --melt) melt_ice ;;
+    --wings) wings_menu ;;
+    --uefi) systemctl reboot --firmware-setup ;;
+    "") show_menu ;;
+    install|remove|search) run_dnf "$@" ;;
+    *) echo "Unknown command. Run 'sun' for menu." ;;
+esac

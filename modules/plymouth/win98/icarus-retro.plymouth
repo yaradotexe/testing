@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Icarus Retro
+Description=Project Icarus Win98-style Boot Animation
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/icarus-retro
+ScriptFile=/usr/share/plymouth/themes/icarus-retro/icarus-retro.script

@@ -1,0 +1,57 @@
+
+
+set -e
+
+THEME_NAME="Reactionary"
+GTK_THEME="Reactionary-98"
+ICON_THEME="Reactionary-Icons"
+CURSOR_THEME="Win98-Cursor"
+
+echo "Applying $THEME_NAME theme globally..."
+
+
+if command -v lookandfeeltool &> /dev/null; then
+    lookandfeeltool -a org.kde.reactionary.desktop || echo "Warning: KDE theme not found."
+fi
+
+mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
+cat <<EOF > "$HOME/.config/gtk-3.0/settings.ini"
+[Settings]
+gtk-theme-name=$GTK_THEME
+gtk-icon-theme-name=$ICON_THEME
+gtk-cursor-theme-name=$CURSOR_THEME
+gtk-font-name=Noto Sans 10
+EOF
+
+cp "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
+
+if command -v flatpak &> /dev/null; then
+    echo "Setting Flatpak overrides for theme consistency..."
+    flatpak override --user --env=GTK_THEME=$GTK_THEME
+    flatpak override --user --env=ICON_THEME=$ICON_THEME
+    # Allow Flatpaks to see the themes/icons
+    flatpak override --user --filesystem=xdg-config/gtk-3.0:ro
+    flatpak override --user --filesystem=xdg-config/gtk-4.0:ro
+    flatpak override --user --filesystem=~/.themes:ro
+    flatpak override --user --filesystem=~/.icons:ro
+fi
+
+KONSOLE_DIR="$HOME/.local/share/konsole"
+mkdir -p "$KONSOLE_DIR"
+if [ ! -f "$KONSOLE_DIR/Icarus.profile" ]; then
+    cat <<EOF > "$KONSOLE_DIR/Icarus.profile"
+[Appearance]
+ColorScheme=Linux
+Font=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
+
+[General]
+Name=Icarus
+Parent=FALLBACK/
+EOF
+fi
+
+if command -v xrdb &> /dev/null; then
+    echo "Xcursor.theme: $CURSOR_THEME" | xrdb -merge
+fi
+
+notify-send "Icarus Theme" "Win98 aesthetic applied successfully."

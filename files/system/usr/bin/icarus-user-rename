@@ -1,0 +1,18 @@
+PENDING="/var/tmp/icarus-pending-rename"
+[ ! -f "$PENDING" ] && exit 0
+
+DATA=$(cat "$PENDING")
+NEW_USER=$(echo "$DATA" | cut -d'|' -f1)
+REAL_NAME=$(echo "$DATA" | cut -d'|' -f2)
+PASSWORD=$(echo "$DATA" | cut -d'|' -f3)
+OLD_USER="bazzite"
+
+echo "Icarus: Migrating $OLD_USER -> $NEW_USER"
+
+pkill -u "$OLD_USER" || true
+usermod -l "$NEW_USER" -d "/home/$NEW_USER" -m "$OLD_USER"
+groupmod -n "$NEW_USER" "$OLD_USER"
+usermod -c "$REAL_NAME" "$NEW_USER"
+echo "$NEW_USER:$PASSWORD" | chpasswd
+
+rm "$PENDING"

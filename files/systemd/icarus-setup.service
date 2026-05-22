@@ -1,0 +1,14 @@
+[Unit]
+Description=Icarus First Boot Configuration
+After=network-online.target graphical-setup.service
+ConditionPathExists=!/home/%u/.config/icarus-setup-done
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/icarus-wizard
+Environment=DISPLAY=:0
+User=%u
+Restart=no
+
+[Install]
+WantedBy=graphical.target

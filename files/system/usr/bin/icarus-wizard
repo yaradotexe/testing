@@ -1,0 +1,177 @@
+#!/usr/bin/bash
+# Icarus OOBE - Initial System Configuration (State Machine Version)
+# Handles user creation, networking, and initial software push
+
+FLAG_FILE="$HOME/.config/icarus-setup-done"
+ICON="/usr/share/icons/hicolor/48x48/apps/icarus-logo.png"
+
+# Find original Clippy Icon
+CLIPPY_ICON="/usr/share/icons/hicolor/48x48/apps/clippy.png"
+[ ! -f "$CLIPPY_ICON" ] && CLIPPY_ICON="$ICON"
+
+YAD_OPTS="--center --fixed --width=800 --height=600 --window-icon=$ICON"
+LOG="$HOME/.config/icarus-setup.log"
+
+[ -f "$FLAG_FILE" ] && [ "$1" != "--force" ] && exit 0
+
+mkdir -p "$(dirname "$LOG")"
+
+validate_user() {
+    local U=$1
+    if [[ ! "$U" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        yad --error --text="Invalid username! Use only lowercase, numbers, and hyphens." --width=300
+        return 1
+    fi
+    return 0
+}
+
+check_net() {
+    ping -c 1 8.8.8.8 &> /dev/null
+}
+
+clippy_tip() {
+    local TIP=$1
+    echo -e "<b>Clippy says:</b>\n<i>\"$TIP\"</i>"
+}
+
+# Initial State
+STATE="STEP1"
+THEME="Classic Light"
+LANG="DE (ISO)"
+TZ="Europe/Berlin"
+REALNAME=""
+USER="icarus"
+PASS=""
+HOST="icarus-pc"
+MODE="Workstation"
+PUSH_STEAM="TRUE"
+PUSH_LUTRIS="FALSE"
+PUSH_HEROIC="FALSE"
+PUSH_CREME="TRUE"
+PUSH_CLIPPY="TRUE"
+NET="DHCP"
+SSH_ON="TRUE"
+TS_ON="FALSE"
+
+while [ "$STATE" != "FINISH" ] && [ "$STATE" != "QUIT" ]; do
+    case "$STATE" in
+        STEP1)
+            TIP=$(clippy_tip "It looks like you're trying to set up a new OS! Would you like help with your regional settings?")
+            STEP1=$(yad $YAD_OPTS --form --title="Icarus Setup - System Basics" \
+                --text="$TIP" \
+                --image="$CLIPPY_ICON" --image-on-top \
+                --field="Theme:CB" "$THEME!Classic Dark" \
+                --field="Layout:CB" "$LANG!US (ANSI)" \
+                --field="Timezone:CB" "$TZ!UTC" \
+                --field="Real Name:" "$REALNAME" \
+                --field="Username:" "$USER" \
+                --field="Password:H" "$PASS" \
+                --field="Hostname:" "$HOST" \
+                --button="Next:0" --button="Quit:1")
+            
+            RET=$?
+            if [ $RET -eq 1 ]; then STATE="QUIT"; continue; fi
+            
+            THEME=$(echo "$STEP1" | cut -d'|' -f1)
+            LANG=$(echo "$STEP1" | cut -d'|' -f2)
+            TZ=$(echo "$STEP1" | cut -d'|' -f3)
+            REALNAME=$(echo "$STEP1" | cut -d'|' -f4)
+            USER=$(echo "$STEP1" | cut -d'|' -f5)
+            PASS=$(echo "$STEP1" | cut -d'|' -f6)
+            HOST=$(echo "$STEP1" | cut -d'|' -f7)
+
+            if [ -z "$USER" ] || [ -z "$PASS" ] || [ -z "$HOST" ]; then
+                yad --error --text="Username, Password, and Hostname are required!" --width=300
+                continue
+            fi
+            validate_user "$USER" || continue
+            STATE="STEP2"
+            ;;
+
+        STEP2)
+            TIP=$(clippy_tip "I can help you choose the best software for your gaming and work needs. Shall we proceed?")
+            STEP2=$(yad $YAD_OPTS --form --title="Icarus Setup - Profile" \
+                --text="$TIP" \
+                --image="$CLIPPY_ICON" --image-on-top \
+                --field="Mode:CB" "$MODE!Console!Hybrid" \
+                --field="Initial Software Stack:LBL" "" \
+                --field="Steam:CHK" "$PUSH_STEAM" \
+                --field="Lutris:CHK" "$PUSH_LUTRIS" \
+                --field="Heroic:CHK" "$PUSH_HEROIC" \
+                --field="Creme-Brulee (DNF Container):CHK" "$PUSH_CREME" \
+                --field="Clippy AI Assistant:CHK" "$PUSH_CLIPPY" \
+                --button="Next:0" --button="Back:2")
+            
+            RET=$?
+            if [ $RET -eq 2 ]; then STATE="STEP1"; continue; fi
+            if [ $RET -ne 0 ]; then STATE="QUIT"; continue; fi
+
+            MODE=$(echo "$STEP2" | cut -d'|' -f1)
+            PUSH_STEAM=$(echo "$STEP2" | cut -d'|' -f3)
+            PUSH_LUTRIS=$(echo "$STEP2" | cut -d'|' -f4)
+            PUSH_HEROIC=$(echo "$STEP2" | cut -d'|' -f5)
+            PUSH_CREME=$(echo "$STEP2" | cut -d'|' -f6)
+            PUSH_CLIPPY=$(echo "$STEP2" | cut -d'|' -f7)
+            STATE="STEP3"
+            ;;
+
+        STEP3)
+            TIP=$(clippy_tip "Networking can be tricky! I recommend DHCP for most home users. Would you like to enable SSH?")
+            STEP3=$(yad $YAD_OPTS --form --title="Icarus Setup - Advanced" \
+                --text="$TIP" \
+                --image="$CLIPPY_ICON" --image-on-top \
+                --field="Network:CB" "$NET!Static" \
+                --field="SSH Server:CHK" "$SSH_ON" \
+                --field="Tailscale VPN:CHK" "$TS_ON" \
+                --button="Finish:0" --button="Back:2")
+            
+            RET=$?
+            if [ $RET -eq 2 ]; then STATE="STEP2"; continue; fi
+            if [ $RET -ne 0 ]; then STATE="QUIT"; continue; fi
+
+            NET=$(echo "$STEP3" | cut -d'|' -f1)
+            SSH_ON=$(echo "$STEP3" | cut -d'|' -f2)
+            TS_ON=$(echo "$STEP3" | cut -d'|' -f3)
+            STATE="FINISH"
+            ;;
+    esac
+done
+
+[ "$STATE" == "QUIT" ] && exit 1
+
+# Execution Block
+echo "$(date): Starting Setup Execution" > "$LOG"
+notify-send "Icarus Setup" "Applying system configuration..."
+
+PENDING="/var/tmp/icarus-pending-rename"
+echo "$USER|$REALNAME|$PASS" | sudo tee "$PENDING" > /dev/null
+sudo chmod 600 "$PENDING"
+sudo hostnamectl set-hostname "$HOST"
+
+[ "$SSH_ON" == "TRUE" ] && sudo systemctl enable sshd >> "$LOG" 2>&1
+[ "$TS_ON" == "TRUE" ] && sudo systemctl enable tailscaled >> "$LOG" 2>&1
+
+# Apply theme globally
+icarus-apply-theme >> "$LOG" 2>&1
+
+# Software deployment with network check
+if check_net; then
+    (
+        echo "Starting software deployment..." >> "$LOG"
+        [ "$PUSH_CREME" == "TRUE" ] && (sun --melt --version || sun dnf --version) >> "$LOG" 2>&1
+        [ "$PUSH_STEAM" == "TRUE" ] && flatpak install -y flathub com.valvesoftware.Steam >> "$LOG" 2>&1
+        [ "$PUSH_LUTRIS" == "TRUE" ] && flatpak install -y flathub net.lutris.Lutris >> "$LOG" 2>&1
+        [ "$PUSH_HEROIC" == "TRUE" ] && flatpak install -y flathub com.heroicgameinterpreter.heroic >> "$LOG" 2>&1
+        if [ "$PUSH_CLIPPY" == "TRUE" ]; then
+             echo "Clippy AI Assistant requested. (Deployment pending)" >> "$LOG"
+        fi
+        echo "Deployment finished." >> "$LOG"
+        notify-send "Icarus Setup" "Software deployment complete."
+    ) &
+else
+    echo "Network unavailable, skipping software push." >> "$LOG"
+    yad --warning --text="No internet connection detected!\nSoftware installation was skipped.\nYou can install apps later using 'sun'." --width=300
+fi
+
+yad --info --title="Setup Complete" --text="System configured successfully.\nUsername '$USER' will be active after reboot.\n\nSoftware is being installed in the background." --width=400
+touch "$FLAG_FILE"

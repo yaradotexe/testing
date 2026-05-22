@@ -1,0 +1,22 @@
+
+
+MODE_FILE="$HOME/.config/icarus-boot-mode"
+CURRENT_MODE=$(cat "$MODE_FILE" 2>/dev/null || echo "Desktop")
+
+if [[ "$CURRENT_MODE" == "Manual" ]]; then
+    CHOICE=$(gum choose --header "Icarus Boot Manager" \
+        "Desktop (KDE Plasma)" \
+        "Console (Gamescope/Pegasus)" \
+        "Maintenance Shell")
+
+    case "$CHOICE" in
+        "Desktop"*) exec startplasma-wayland ;;
+        "Console"*) exec gamescope -f -- pegasus-fe ;;
+        "Maintenance"*) exec konsole ;;
+    esac
+else
+    case "$CURRENT_MODE" in
+        "Console") exec gamescope -f -- pegasus-fe ;;
+        *) exec startplasma-wayland ;;
+    esac
+fi
