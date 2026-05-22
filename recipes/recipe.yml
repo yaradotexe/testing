@@ -12,8 +12,6 @@ modules:
       - gum
       - yad
       - zenity
-      - distrobox
-      - gamescope
       - retroarch
       - plymouth-theme-spinner
 
