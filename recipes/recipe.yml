@@ -27,6 +27,6 @@ modules:
 
   - type: script
     scripts:
-      - scripts/setup-ui-theme.sh
-      - scripts/finalize-system.sh
+      - setup-ui-theme.sh
+      - finalize-system.sh
 
